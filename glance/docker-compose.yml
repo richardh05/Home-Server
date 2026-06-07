@@ -1,13 +1,25 @@
+networks:
+  proxy-public:
+    external: true
+
 services:
   glance:
     container_name: glance
     image: glanceapp/glance
     labels:
+      traefik.enable: true
+      traefik.http.routers.glance.rule: Host(`glance.richard-hughes.dev`)
+      traefik.http.routers.glance.entrypoints: websecure
+      traefik.http.routers.glance.tls: true
+      traefik.http.routers.glance.tls.certresolver: namedotcom-resolver
+      traefik.http.services.glance.loadbalancer.server.port: "8080"
+      traefik.http.services.glance.loadbalancer.server.scheme: http
+
       glance.name: Glance
       glance.icon: si:glance
       glance.description: Homepage
       glance.category: System
-      glance.url: http://${URL}:8080
+      glance.url: https://glance.richard-hughes.dev
     restart: unless-stopped
     volumes:
       - ./config:/app/config
@@ -15,5 +27,5 @@ services:
       - /etc/localtime:/etc/localtime:ro
       # Optionally, also mount docker socket if you want to use the docker containers widget
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - 8080:8080
+    networks:
+      - proxy-public
