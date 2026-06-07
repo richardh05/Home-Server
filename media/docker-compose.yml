@@ -1,3 +1,7 @@
+networks:
+  proxy-public:
+    external: true
+
 services:
   jellyfin:
     image: jellyfin/jellyfin
@@ -8,9 +12,40 @@ services:
       glance.description: Films & Shows
       glance.category: Media
       glance.url: http://${URL}:8096
+
+      traefik.enable: "true"
+      traefik.docker.network: "proxy-public"
+      ## HTTP Router
+      #### Entry point where Jellyfin is accessible via
+      #### Change secure to https in the line below to have accessible without needing to specify a port and change the SSLHost option below
+      traefik.http.routers.jellyfin.entryPoints: secure
+      #### Host or Path where Jellyfin is accessible
+      #### Remove (or change) this rule if you'd rather have Jellyfin accessible at a PathPrefix URI
+      traefik.http.routers.jellyfin.rule: Host(`jellyfin.richard-hughes.dev`) # OPTIONAL: && PathPrefix(`/jellyfin`)
+      #### Enable TLS with the ACME/LetsEncrypt resolver for HOSTNAME.DOMAIN_NAME
+      traefik.http.routers.jellyfin.tls: "true"
+      # traefik.http.routers.jellyfin.tls.certResolver: leresolver
+      traefik.http.routers.jellyfin.tls.domains: jellyfin.richard-hughes.dev
+      ## Middleware
+      traefik.http.routers.jellyfin.middlewares: jellyfin-mw
+      #### The customResponseHeaders option lists the Header names and values to apply to the response.
+      traefik.http.middlewares.jellyfin-mw.headers.customResponseHeaders.X-Robots-Tag: noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+      #### The sslRedirect is set to true, then only allow https requests.
+      traefik.http.middlewares.jellyfin-mw.headers.SSLRedirect: true
+      
+      traefik.http.routers.jellyfin.service: jellyfin
+      traefik.http.services.jellyfin-svc.loadBalancer.server.port: "8096"
+      traefik.http.services.jellyfin-svc.loadBalancer.passHostHeader: "true"
+      ## Redirection of HTTP on port 9999 to HTTPS on port 9999 (consistent protocol)
+      traefik.http.routers.jellyfin-insecure.entryPoints: secure
+      traefik.http.routers.jellyfin-insecure.rule: Host(`jellyfin.richard-hughes.dev`)' # OPTIONAL: && PathPrefix(`/jellyfin`)
+      traefik.http.routers.jellyfin-insecure.middlewares: jellyfin-insecure-mw
+      traefik.http.middlewares.jellyfin-insecure-mw.redirectscheme.scheme: https
+      traefik.http.middlewares.jellyfin-insecure-mw.redirectscheme.port: 9999 # remove if you are using a default port
+      traefik.http.middlewares.jellyfin-insecure-mw.redirectscheme.permanent: false
+      traefik.http.routers.jellyfin-insecure.service: noop@internal
+
     user: "1000:1000"
-    ports:
-      - "8096:8096"  # host:container
     volumes:
       - ${DATA}/jellyfin/config:/config
       - ${DATA}/jellyfin/cache:/cache
@@ -22,6 +57,7 @@ services:
       - /dev/dri/renderD128:/dev/dri/renderD128
     group_add:
       - ${RENDER_GID}
+    
 
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest

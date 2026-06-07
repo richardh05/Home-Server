@@ -51,15 +51,8 @@ services:
       glance.icon: si:adguard
       glance.description: Adblock & DNS
       glance.category: System
-      glance.url: http://${URL}:3001
-    ports:
-      - "53:53/tcp"   # DNS over TCP
-      - "53:53/udp"   # DNS over UDP
-      - "67:67/udp"   # DHCP Server (optional)
-      # - "80:80/tcp"   # HTTP Web Interface
-      # - "443:443/tcp" # HTTPS Web Interface
-      - "853:853/tcp" # DNS-over-TLS
-      - "3001:3000/tcp" # Initial Setup API
+      glance.url: http://${URL}:3000
+    network_mode: host
     volumes:
       - ./work:/opt/adguardhome/work
       - ./conf:/opt/adguardhome/conf
