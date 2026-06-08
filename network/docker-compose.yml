@@ -22,6 +22,16 @@ services:
       - ./letsencrypt:/letsencrypt # Certificate storage location
     networks:
       - proxy-public
+    labels:
+      traefik.enable: "true"
+      # Create a local middleware on Traefik called "global-hardening"
+      traefik.http.middlewares.global-hardening.headers.customResponseHeaders.X-Robots-Tag: "noindex,nofollow,nosnippet"
+      traefik.http.middlewares.global-hardening.headers.frameDeny: "true"
+      traefik.http.middlewares.global-hardening.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.global-hardening.headers.stsSeconds: "315360000"
+      traefik.http.middlewares.global-hardening.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.global-hardening.headers.stsPreload: "true"
+
     command:
       - "--global.checknewversion=false"
       - "--global.sendanonymoususage=false"
@@ -29,18 +39,25 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=proxy-public"
+
+      # 1. HTTP/HTTPS Entrypoint & HTTPS Redirect
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      # Enforce universal SSL/HTTPS redirect
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      # Configure Let's Encrypt DNS Challenge via Name.com
+
+      # 2. Inject hardening middleware globally
+      - "--entrypoints.websecure.http.middlewares=global-hardening@docker"
+
+      # 3. Set Name.com as the DNS resolver & Let's Encrypt DNS Challenge
+      - "--entrypoints.websecure.http.tls.certresolver=namedotcom-resolver"
       - "--entrypoints.websecure.http.tls.domains[0].main=richard-hughes.dev"
       - "--entrypoints.websecure.http.tls.domains[0].sans=*.richard-hughes.dev"
       - "--certificatesresolvers.namedotcom-resolver.acme.dnschallenge=true"
       - "--certificatesresolvers.namedotcom-resolver.acme.dnschallenge.provider=namedotcom"
       - "--certificatesresolvers.namedotcom-resolver.acme.email=${NAMEDOTCOM_API_EMAIL}"
       - "--certificatesresolvers.namedotcom-resolver.acme.storage=/letsencrypt/acme.json"
+
   adguardhome:
     image: adguard/adguardhome:latest
     container_name: adguardhome
