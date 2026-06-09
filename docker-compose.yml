@@ -4,6 +4,7 @@ include:
   - immich/docker-compose.yml
   - media/docker-compose.yml
   - network/docker-compose.yml
+  - postgres/docker-compose.yml
   - productivity/docker-compose.yml
   - romm/docker-compose.yml
   - docker-compose.vaultwarden.yml

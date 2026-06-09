@@ -29,65 +29,32 @@ services:
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
       
-      traefik.http.routers.jf.rule: Host(`jellyfin.richard-hughes.dev`)
+      traefik.http.routers.jf.rule: Host(`jellyfin.${DOMAIN}`)
       traefik.http.routers.jf.entrypoints: websecure
       traefik.http.routers.jf.tls: true
       traefik.http.services.jf.loadbalancer.server.port: "8096"
     
-
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
-    labels:
-      glance.name: Audiobookshelf
-      glance.icon: si:audiobookshelf
-      glance.description: Audiobooks & eBooks
-      glance.category: Media
-      glance.url: http://${URL}:13378
-    ports:
-      - 13378:80
+    container_name: audiobookshelf
     volumes:
       - ${AUDIOBOOKS}:/audiobooks
       - ${DATA}/audiobookshelf/config:/config
       - ${DATA}/audiobookshelf/metadata:/metadata
     restart: unless-stopped
-
-  miniflux:
-    image: miniflux/miniflux:latest
+    networks:
+      - proxy-public
     labels:
-      glance.name: Miniflux
-      glance.icon: si:rss
-      glance.description: Articles
+      glance.name: Audiobookshelf
+      glance.icon: si:audiobookshelf
+      glance.description: Audiobooks & eBooks
       glance.category: Media
-      glance.url: http://${URL}:8060
-    ports:
-      - "8060:8080"
-    depends_on:
-      miniflux-db:
-        condition: service_healthy
-    environment:
-      # - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable
-      - DATABASE_URL=postgres://miniflux:secret@miniflux-db/miniflux?sslmode=disable
-      - RUN_MIGRATIONS=1
-      - CREATE_ADMIN=1
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=test123
-  miniflux-db:
-    image: postgres:18
-    labels:
-      glance.parent: Miniflux
-      glance.name: Database
-    environment:
-      - POSTGRES_USER=miniflux
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=miniflux
-      - PGDATA=/var/lib/postgresql/data
-    volumes:
-      # You may have to adjust the volume path depending on the version of Postgres
-      # Postgres 18 uses /var/lib/postgresql
-      # Postgres 17 and below uses /var/lib/postgresql/data
-      # See https://hub.docker.com/_/postgres#pgdata
-      - ${DATA}/miniflux:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "miniflux"]
-      interval: 10s
-      start_period: 30s
+      glance.url: https://abs.${DOMAIN}
+      
+      traefik.enable: "true"
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.abs.rule: Host(`abs.richard-hughes.dev`)
+      traefik.http.routers.abs.entrypoints: websecure
+      traefik.http.routers.abs.tls: true
+      traefik.http.services.abs.loadbalancer.server.port: "80"

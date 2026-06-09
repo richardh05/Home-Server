@@ -7,19 +7,19 @@ services:
     container_name: glance
     image: glanceapp/glance
     labels:
-      traefik.enable: true
-      traefik.docker.network: "proxy-public"
-      
-      traefik.http.routers.glance.rule: Host(`glance.richard-hughes.dev`)
-      traefik.http.routers.glance.entrypoints: websecure
-      traefik.http.routers.glance.tls: true
-      traefik.http.services.glance.loadbalancer.server.port: "8080"
-
       glance.name: Glance
       glance.icon: si:glance
       glance.description: Homepage
       glance.category: System
-      glance.url: https://glance.richard-hughes.dev
+      glance.url: https://glance.${DOMAIN}
+
+      traefik.enable: true
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.glance.rule: Host(`glance.${DOMAIN}`)
+      traefik.http.routers.glance.entrypoints: websecure
+      traefik.http.routers.glance.tls: true
+      traefik.http.services.glance.loadbalancer.server.port: "8080"
     restart: unless-stopped
     volumes:
       - ./config:/app/config

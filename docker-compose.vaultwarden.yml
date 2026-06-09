@@ -9,7 +9,7 @@ services:
     labels:
       glance.name: Vaultwarden
       glance.icon: si:vaultwarden
-      glance.url: https://vault.richard-hughes.dev
+      glance.url: https://vault.${DOMAIN}
       glance.category: Productivity
       glance.description: Passwords
 
@@ -17,7 +17,7 @@ services:
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
 
-      traefik.http.routers.vaultwarden.rule: Host(`vault.richard-hughes.dev`)
+      traefik.http.routers.vaultwarden.rule: Host(`vault.${DOMAIN}`)
       traefik.http.routers.vaultwarden.entrypoints: websecure
       traefik.http.routers.vaultwarden.tls: "true"
       traefik.http.services.vaultwarden.loadbalancer.server.port: "80"

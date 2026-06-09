@@ -1,15 +1,11 @@
+networks:
+  proxy-public:
+    external: true
+
 services:
   qbittorrent:
     image: ghcr.io/hotio/qbittorrent
     container_name: qbittorrent
-    labels:
-      glance.name: qBittorrent
-      glance.icon: si:qbittorrent
-      glance.description: Torrents
-      glance.category: System
-      glance.url: http://${URL}:9090
-    ports:
-      - "9090:8080"
     environment:
       - LIBTORRENT=v1
       - WEBUI_PORTS=8080/tcp,8080/udp
@@ -20,4 +16,18 @@ services:
       - 127.0.0.1
     env_file: hotio.env
     restart: unless-stopped
+    labels:
+      glance.name: qBittorrent
+      glance.icon: si:qbittorrent
+      glance.description: Torrents
+      glance.category: System
+      glance.url: https://qbit.${DOMAIN}
+
+      traefik.enable: true
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.qbit.rule: Host(`qbit.${DOMAIN}`)
+      traefik.http.routers.qbit.entrypoints: websecure
+      traefik.http.routers.qbit.tls: true
+      traefik.http.services.qbit.loadbalancer.server.port: "8080"
 

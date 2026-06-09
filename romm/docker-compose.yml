@@ -1,67 +1,77 @@
-version: "3"
-
-volumes:
-    mysql_data:
-    romm_resources:
-    romm_redis_data:
+networks:
+  proxy-public:
+    external: true
+  romm-internal:
 
 services:
-    romm:
-        image: rommapp/romm:latest
-        container_name: romm
-        restart: unless-stopped
-        labels:
-          glance.name: Romm
-          glance.icon: si:itchdotio
-          glance.description: Retro Games
-          glance.category: Media
-          glance.url: http://${URL}:80
-          glance.id: romm
-        environment:
-            - DB_HOST=romm-db
-            - DB_NAME=${ROMM_DB_NAME}
-            - DB_USER=${ROMM_DB_USER}
-            - DB_PASSWD=${ROMM_DB_PASSWORD}
-            - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET_KEY}
-            - SCREENSCRAPER_USER=${ROMM_SCREENSCRAPER_USER}
-            - SCREENSCRAPER_PASSWORD=${ROMM_SCREENSCRAPER_PASSWORD}
-            - IGDB_CLIENT_ID=${ROMM_IGDB_CLIENT_ID}
-            - IGDB_CLIENT_SECRET=${ROMM_IGDB_CLIENT_SECRET}
-            - STEAMGRIDDB_API_KEY=${ROMM_STEAMGRIDDB_API_KEY}
-            - LAUNCHBOX_API_ENABLED=true
-            - ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA=true
-            - HASHEOUS_API_ENABLED=true
-        volumes:
-            - ${DATA}/romm_resources:/romm/resources # Resources fetched from IGDB (covers, screenshots, etc.)
-            - ${DATA}/romm_redis_data:/redis-data # Cached data for background tasks
-            - ${GAMES}:/romm/library # Your game library. Check https://github.com/rommapp/romm?tab=readme-ov-file#folder-structure for more details.
-            - ${GAMES}/assets:/romm/assets # Uploaded saves, states, etc.
-            - ./config:/romm/config # Path where config.yml is stored
-        ports:
-            - 8090:8080
-        depends_on:
-            romm-db:
-                condition: service_healthy
-                restart: true
+  romm:
+    image: rommapp/romm:latest
+    container_name: romm
+    restart: unless-stopped
 
-    romm-db:
-        image: mariadb:latest
-        container_name: romm-db
-        restart: unless-stopped
-        labels:
-          glance.parent: romm
-          glance.name: Database
-        environment:
-            - MARIADB_ROOT_PASSWORD=${ROMM_DB_ROOT_PASSWORD} # Use a unique, secure password
-            - MARIADB_DATABASE=${ROMM_DB_NAME}
-            - MARIADB_USER=${ROMM_DB_USER}
-            - MARIADB_PASSWORD=${ROMM_DB_PASSWORD}
-        volumes:
-            - ${DATA}/romm-mariadb:/var/lib/mysql
-        healthcheck:
-            test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
-            start_period: 30s
-            start_interval: 10s
-            interval: 10s
-            timeout: 5s
-            retries: 5
+    environment:
+    - DB_HOST=romm-db
+    - DB_NAME=${ROMM_DB_NAME}
+    - DB_USER=${ROMM_DB_USER}
+    - DB_PASSWD=${ROMM_DB_PASSWORD}
+    - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET_KEY}
+    - SCREENSCRAPER_USER=${ROMM_SCREENSCRAPER_USER}
+    - SCREENSCRAPER_PASSWORD=${ROMM_SCREENSCRAPER_PASSWORD}
+    - IGDB_CLIENT_ID=${ROMM_IGDB_CLIENT_ID}
+    - IGDB_CLIENT_SECRET=${ROMM_IGDB_CLIENT_SECRET}
+    - STEAMGRIDDB_API_KEY=${ROMM_STEAMGRIDDB_API_KEY}
+    - LAUNCHBOX_API_ENABLED=true
+    - ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA=true
+    - HASHEOUS_API_ENABLED=true
+    volumes:
+    - ${DATA}/romm_resources:/romm/resources # Resources fetched from IGDB (covers, screenshots, etc.)
+    - ${DATA}/romm_redis_data:/redis-data # Cached data for background tasks
+    - ${GAMES}:/romm/library # Your game library. Check https://github.com/rommapp/romm?tab=readme-ov-file#folder-structure for more details.
+    - ${GAMES}/assets:/romm/assets # Uploaded saves, states, etc.
+    - ./config:/romm/config # Path where config.yml is stored
+    networks:
+    - proxy-public
+    - romm-internal
+    depends_on:
+      romm-db:
+        condition: service_healthy
+        restart: true
+    labels:
+      glance.name: Romm
+      glance.icon: si:itchdotio
+      glance.description: Retro Games
+      glance.category: Media
+      glance.url: https://romm.${DOMAIN}
+      glance.id: romm
+
+      traefik.enable: true
+      traefik.docker.network: "proxy-public"
+
+      traefik.http.routers.romm.rule: Host(`romm.${DOMAIN}`)
+      traefik.http.routers.romm.entrypoints: websecure
+      traefik.http.routers.romm.tls: true
+      traefik.http.services.romm.loadbalancer.server.port: "8080"
+
+  romm-db:
+    image: mariadb:latest
+    container_name: romm-db
+    restart: unless-stopped
+    labels:
+      glance.parent: romm
+      glance.name: Database
+    environment:
+      - MARIADB_ROOT_PASSWORD=${ROMM_DB_ROOT_PASSWORD} # Use a unique, secure password
+      - MARIADB_DATABASE=${ROMM_DB_NAME}
+      - MARIADB_USER=${ROMM_DB_USER}
+      - MARIADB_PASSWORD=${ROMM_DB_PASSWORD}
+    volumes:
+      - ${DATA}/romm-mariadb:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      start_period: 30s
+      start_interval: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - romm-internal
