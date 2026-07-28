@@ -49,12 +49,52 @@ services:
       glance.icon: si:audiobookshelf
       glance.description: Audiobooks & eBooks
       glance.category: Media
-      glance.url: https://abs.${DOMAIN}
+      glance.url: https://abs.${DOMAIN}/
       
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
       
-      traefik.http.routers.abs.rule: Host(`abs.richard-hughes.dev`)
+      traefik.http.routers.abs.rule: Host(`abs.${DOMAIN}`)
       traefik.http.routers.abs.entrypoints: websecure
       traefik.http.routers.abs.tls: true
       traefik.http.services.abs.loadbalancer.server.port: "80"
+
+  freshrss:
+    image: freshrss/freshrss:latest
+    container_name: freshrss
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+    volumes:
+      - ${DATA}/freshrss/data:/var/www/FreshRSS/data
+      - ${DATA}/freshrss/extensions:/var/www/FreshRSS/extensions
+    environment:
+      TZ: Europe/London
+      # Cron job to refresh feeds at specified minutes
+      CRON_MIN: '2,32'
+    # Optional healthcheck
+    healthcheck:
+      test: ["CMD", "cli/health.php"]
+      timeout: 10s
+      start_period: 60s
+      start_interval: 11s
+      interval: 75s
+      retries: 3
+    networks:
+    - proxy-public
+
+    labels:
+      glance.name: FreshRSS
+      glance.icon: si:freshrss
+      glance.description: Articles
+      glance.category: Media
+      glance.url: https://freshrss.${DOMAIN}/
+      
+      traefik.enable: "true"
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.freshrss.rule: Host(`freshrss.${DOMAIN}`)
+      traefik.http.routers.freshrss.entrypoints: websecure
+      traefik.http.routers.freshrss.tls: true
+      traefik.http.services.freshrss.loadbalancer.server.port: "80"
