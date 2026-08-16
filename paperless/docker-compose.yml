@@ -1,0 +1,58 @@
+networks:
+  proxy-public:
+    external: true
+  paperless-internal:
+    driver: bridge
+
+services:
+  paperless-broker:
+    image: docker.io/valkey/valkey:9-alpine
+    restart: unless-stopped
+    labels:
+      glance.name: Valkey
+      glance.parent: paperlessngx
+    networks:
+      - paperless-internal
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0
+    restart: unless-stopped
+    depends_on:
+      - paperless-broker
+    networks:
+      - proxy-public
+      - paperless-internal
+    volumes:
+      - ${DATA}/paperless:/usr/src/paperless/data
+      - ${MEDIA}/Paperless:/usr/src/paperless/media
+      - ${MEDIA}/Paperless/consume:/usr/src/paperless/consume
+      - ${MEDIA}/Paperless/export:/usr/src/paperless/export
+    environment:
+      PAPERLESS_REDIS: redis://paperless-broker:6379
+      PAPERLESS_DBENGINE: sqlite
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET}
+      PAPERLESS_URL: "https://paperless.${DOMAIN}"
+      PAPERLESS_CSRF_ALLOWED_ORIGINS: "https://paperless.${DOMAIN}"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 400M
+    labels:
+      glance.name: Paperless-ngx
+      glance.icon: si:paperlessngx
+      glance.url: https://paperless.${DOMAIN}
+      glance.description: Documents
+      glance.category: Productivity
+      glance.id: paperlessngx
+
+      docker-volume-backup.stop-during-backup: "true"
+
+      traefik.enable: true
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.paperless.rule: Host(`paperless.${DOMAIN}`)
+      traefik.http.routers.paperless.entrypoints: websecure
+      traefik.http.routers.paperless.tls: true
+      traefik.http.services.paperless.loadbalancer.server.port: "8000"
