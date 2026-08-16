@@ -23,6 +23,8 @@ services:
       glance.category: System
       glance.url: https://qbit.${DOMAIN}
 
+      docker-volume-backup.stop-during-backup: "true"
+
       traefik.enable: true
       traefik.docker.network: "proxy-public"
       

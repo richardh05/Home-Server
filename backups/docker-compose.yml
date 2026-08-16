@@ -1,0 +1,61 @@
+networks:
+  socket_proxy_internal:
+    internal: true
+
+services:
+  docker_socket_proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker_socket_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1   # Allow reading container metadata & listing
+      POST: 1         # Allow POST requests (required for stop/start/pause)
+      INFO: 1         # Allows reading Docker system info & Swarm status
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket_proxy_internal
+
+  backup:
+    image: offen/docker-volume-backup:v2
+    container_name: volume_backup
+    restart: unless-stopped
+    environment:
+      # Connect to Docker Daemon via Socket Proxy service name
+      DOCKER_HOST: "tcp://docker_socket_proxy:2375"
+
+      # Cron Schedule: Run nightly at 3:00 AM
+      BACKUP_CRON_EXPRESSION: "0 3 * * *"
+      
+      # {{ .Extension }} automatically renders to .tar.zst
+      BACKUP_FILENAME: "homelab-backup-%Y-%m-%dT%H-%M-%S.{{ .Extension }}"
+
+      # Retention: Keep daily backups for 30 days
+      BACKUP_PRUNING_PREFIX: "homelab-backup-"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_COMPRESSION: "zst"
+
+      # Exclusion Regex
+      # top-level folders matching *postgres*, *redis*, *mariadb*, *tailscale*
+      # large Jellyfin metadata, cache, transcodes, trickplay
+      BACKUP_EXCLUDE_REGEXP: "(\
+        /data/[^/]*(postgres|redis|mariadb|tailscale|romm)[^/]*(/.*)?$\
+        |/jellyfin/.*(metadata|cache|transcodes|trickplay|data/metadata).*$\
+        |/syncthing/.*(index-.*|.*\\.log)$\
+        )"
+
+      # S3 Credentials
+      # AWS_ENDPOINT: "${S3_URL}"
+      # AWS_S3_BUCKET_NAME: "${HOMELAB_S3_NAME}"
+      # AWS_ACCESS_KEY_ID: "${HOMELAB_S3_ID}"
+      # AWS_SECRET_ACCESS_KEY: "${HOMELAB_S3_KEY}"
+      # AWS_DL_FILE_SIZE_LIMIT: "0"
+    volumes:
+      - ${DATA}:/backup/data:ro
+      - ${IMMICH_UPLOAD_LOCATION}/backup:/backup/immich:ro
+      - ${MEDIA}/Backups:/archive
+    depends_on:
+      - docker_socket_proxy
+    networks:
+      - socket_proxy_internal
+      - default

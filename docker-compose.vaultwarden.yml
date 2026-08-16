@@ -13,6 +13,8 @@ services:
       glance.category: Productivity
       glance.description: Passwords
 
+      docker-volume-backup.stop-during-backup: "true"
+
       # https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"

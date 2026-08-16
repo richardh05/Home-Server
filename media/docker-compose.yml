@@ -26,6 +26,9 @@ services:
       glance.description: Films & Shows
       glance.category: Media
       glance.url: https://jellyfin.${DOMAIN}/
+
+      docker-volume-backup.stop-during-backup: "true"
+
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
       
@@ -50,6 +53,8 @@ services:
       glance.description: Audiobooks & eBooks
       glance.category: Media
       glance.url: https://abs.${DOMAIN}/
+
+      docker-volume-backup.stop-during-backup: "true"
       
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
@@ -90,6 +95,8 @@ services:
       glance.description: Articles
       glance.category: Media
       glance.url: https://freshrss.${DOMAIN}/
+
+      docker-volume-backup.stop-during-backup: "true"
       
       traefik.enable: "true"
       traefik.docker.network: "proxy-public"
