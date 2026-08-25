@@ -36,6 +36,12 @@ services:
       romm-db:
         condition: service_healthy
         restart: true
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 256M
     labels:
       glance.name: Romm
       glance.icon: si:itchdotio
