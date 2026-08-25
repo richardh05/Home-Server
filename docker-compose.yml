@@ -4,6 +4,7 @@ include:
   - glance/docker-compose.yml
   - immich/docker-compose.yml
   - media/docker-compose.yml
+  - minecraft/docker-compose.yml
   - network/docker-compose.yml
   - paperless/docker-compose.yml
   - productivity/docker-compose.yml
