@@ -6,14 +6,18 @@ services:
     pull_policy: daily
     environment:
       EULA: "true"
-      TYPE: "PAPER"
+      TYPE: "FABRIC"
       VERSION: "26.2"
-      MEMORY: "4G"
+      MEMORY: "2G"
+      USE_AIKAR_FLAGS: "true"
       ENABLE_WHITELIST: "true"
       ENFORCE_WHITELIST: "true"
-      PLUGINS: |
-        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
-        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+      # Automatically download essential performance mods from Modrinth
+      MODRINTH_PROJECTS: |
+        fabric-api
+        lithium
+        ferrite-core
+        krypton
     volumes:
       - ${MEDIA}/Minecraft:/data
     networks:
@@ -32,9 +36,8 @@ services:
     image: ghcr.io/playit-cloud/playit-agent:latest
     container_name: playit-agent
     restart: unless-stopped
-    # environment:
-      # Optional: paste your agent secret key here once generated
-        # - SECRET_KEY=
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET}
     volumes:
       - ${DATA}/playit:/data
     networks:
