@@ -9,5 +9,5 @@ include:
   - paperless/docker-compose.yml
   - productivity/docker-compose.yml
   # - romm/docker-compose.yml
+  # - vaultwarden/docker-compose.yml
   # - wger/docker-compose.yml
-  - docker-compose.vaultwarden.yml
