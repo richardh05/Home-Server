@@ -1,0 +1,31 @@
+forgejo:
+    name: forgejo
+    image: codeberg.org/forgejo/forgejo:15
+    environment:
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
+    restart: always
+    networks:
+      - proxy-public
+    volumes:
+      - ${DATA}/forgejo:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - '222:22'
+    labels:
+      glance.name: Forgejo
+      glance.icon: si:forgejo
+      glance.url: https://forgejo.${DOMAIN}
+      glance.description: Git Repositories
+      glance.category: Productivity
+      glance.id: forgejo
+
+      docker-volume-backup.stop-during-backup: "true"
+
+      traefik.enable: true
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.forge.rule: Host(`forgejo.${DOMAIN}`)
+      traefik.http.routers.forge.entrypoints: websecure
+      traefik.http.routers.forge.tls: true
+      traefik.http.services.forge.loadbalancer.server.port: "3000"

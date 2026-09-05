@@ -1,6 +1,7 @@
 include:
   - arr/docker-compose.yml
   - backups/docker-compose.yml
+  # - forgejo/docker-compose.yml
   - glance/docker-compose.yml
   - immich/docker-compose.yml
   - media/docker-compose.yml
