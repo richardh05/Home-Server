@@ -15,8 +15,9 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - NAMECOM_USERNAME=${NAMEDOTCOM_API_EMAIL}
-      - NAMECOM_API_TOKEN=${NAMEDOTCOM_API_KEY}
+      - CF_DNS_API_TOKEN=${CLOUDFLARE_DNS_KEY}
+      - CF_ACCOUNT_ID=4a63dfc7eae89fd58536432be50f5615
+      - ACME_EMAIL=${ACME_EMAIL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt # Certificate storage location
@@ -45,6 +46,10 @@ services:
       traefik.http.routers.dashboard.service: api@internal
       traefik.http.routers.dashboard.entrypoints: websecure
       traefik.http.routers.dashboard.tls: true
+      # Fetches TLS certification explictly, so other contaienrs can default to them
+      traefik.http.routers.dashboard.tls.certresolver: cloudflare-resolver
+      traefik.http.routers.dashboard.tls.domains[0].main: ${DOMAIN}
+      traefik.http.routers.dashboard.tls.domains[0].sans: "*.${DOMAIN}"
       # Optional: Add basic auth middleware for security
       # traefik.http.routers.dashboard.middlewares: auth
 
@@ -65,14 +70,16 @@ services:
       # 2. Inject hardening middleware globally
       - "--entrypoints.websecure.http.middlewares=global-hardening@docker"
 
-      # 3. Set Name.com as the DNS resolver & Let's Encrypt DNS Challenge
-      - "--entrypoints.websecure.http.tls.certresolver=namedotcom-resolver"
-      - "--entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}"
-      - "--entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}"
-      - "--certificatesresolvers.namedotcom-resolver.acme.dnschallenge=true"
-      - "--certificatesresolvers.namedotcom-resolver.acme.dnschallenge.provider=namedotcom"
-      - "--certificatesresolvers.namedotcom-resolver.acme.email=${NAMEDOTCOM_API_EMAIL}"
-      - "--certificatesresolvers.namedotcom-resolver.acme.storage=/letsencrypt/acme.json"
+      # 3. Set Cloudflare as the DNS resolver & Let's Encrypt DNS Challenge
+      - "--entrypoints.websecure.http.tls.certresolver=cloudflare-resolver"
+      - "--entrypoints.websecure.http.tls.domains[0].main=richard-hughes.dev"
+      - "--entrypoints.websecure.http.tls.domains[0].sans=*.richard-hughes.dev"
+      - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge.resolvers=1.1.1.1:53"
+      - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge.resolvers=1.0.0.1:53"
+      - "--certificatesresolvers.cloudflare-resolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.cloudflare-resolver.acme.storage=/letsencrypt/acme.json"
 
       # 4. Dashboard
       - "--api.dashboard=true"
@@ -130,7 +137,7 @@ services:
       glance.name: Samba
       glance.icon: si:protondrive
       glance.description: Network Storage
-      glance.category: Productivity
+      glance.category: System
       glance.url: smb://${URL}/Media
     network_mode: host
     environment:
