@@ -1,0 +1,30 @@
+services:
+  autorestic:
+    image: cupcakearmy/autorestic:latest
+    container_name: autorestic_backup
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          autorestic cron --lean
+          sleep 60
+        done   
+    environment:
+      # Restic repository encryption key
+      AUTORESTIC_LOCAL_RESTIC_PASSWORD: "${RESTIC_PASSWORD}"
+
+      # S3 bucket endpoint & path
+      AUTORESTIC_REMOTE_PATH: "${S3_URL}/${S3_NAME}"
+      AUTORESTIC_REMOTE_AWS_ACCESS_KEY_ID: "${S3_ID}"
+      AUTORESTIC_REMOTE_AWS_SECRET_ACCESS_KEY: "${S3_KEY}"
+    volumes:
+      - ./autorestic.yml:/root/.autorestic.yml
+      # Target local repository storage
+      - ${RESTIC_REPO}:/mnt/backup
+      # Source data volumes
+      - ${IMMICH_UPLOAD_LOCATION}/library:/data/immich/library:ro
+      - ${IMMICH_UPLOAD_LOCATION}/upload:/data/immich/upload:ro
+      - ${IMMICH_UPLOAD_LOCATION}/profile:/data/immich/profile:ro
+      - ${EBOOKS}:/data/ebooks:ro
+      - ${GAMES}/assets:/data/game-saves:ro

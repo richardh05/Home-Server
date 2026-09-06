@@ -1,0 +1,40 @@
+backends:
+  local:
+    type: local
+    path: /mnt/backup
+    requirekey: false
+    env: {}
+    rest:
+      user: ""
+      password: ""
+    options: {}
+locations:
+  server_data:
+    from:
+    - /data
+    type: ""
+    to:
+    - local
+    hooks:
+      dir: ""
+      prevalidate: []
+      before: []
+      after: []
+      success: []
+      failure: []
+    cron: 30 3 * * *
+    options:
+      forget:
+        keep-daily:
+        - 7
+        keep-last:
+        - 3
+        keep-monthly:
+        - 12
+        keep-weekly:
+        - 4
+        keep-yearly:
+        - 2
+    forget: prune
+    copyoption: {}
+version: 2

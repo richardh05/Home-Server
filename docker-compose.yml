@@ -10,6 +10,7 @@ include:
   - network/docker-compose.yml
   - paperless/docker-compose.yml
   - productivity/docker-compose.yml
+  - restic/docker-compose.yml
   # - romm/docker-compose.yml
   # - vaultwarden/docker-compose.yml
   # - wger/docker-compose.yml
