@@ -1,0 +1,47 @@
+- type: custom-api
+  title: LeetCode Daily Question
+  cache: 6h
+  url: https://leetcode.com/graphql
+  method: POST
+  headers:
+    Accept: application/json
+  body-type: json
+  body:
+    query: |
+      query questionOfToday {
+        activeDailyCodingChallengeQuestion {
+          link
+          question {
+            questionId
+            title
+            difficulty
+            topicTags {
+              name
+              slug
+            }
+          }
+        }
+      }
+    operationName: questionOfToday
+  template: |
+    <div>
+      <div class="color-highlight size-h3">
+        <a href="https://leetcode.com{{ .JSON.String "data.activeDailyCodingChallengeQuestion.link" }}" target="_blank">
+          {{ .JSON.String "data.activeDailyCodingChallengeQuestion.question.title" }}
+        </a>
+      </div>
+      <p class="size h4 {{ .JSON.String "data.activeDailyCodingChallengeQuestion.question.difficulty" }}">Difficulty: {{ .JSON.String "data.activeDailyCodingChallengeQuestion.question.difficulty" }}</p>
+      <div class="size-h5">
+        {{ if .JSON.Exists "data.activeDailyCodingChallengeQuestion.question.topicTags" }}
+          {{ range $index, $tag := .JSON.Array "data.activeDailyCodingChallengeQuestion.question.topicTags" }}
+            {{ if gt $index 0 }} · {{ end }}
+            <span class="topic-tag">{{ $tag.String "name" }}</span>
+          {{ end }}
+        {{ else }}
+          <span class="topic-tag">None</span>
+        {{ end }}
+      </div>
+      {{ if .JSON.Bool "data.activeDailyCodingChallengeQuestion.question.paidOnly" }}
+        <p class="premium">This is a Premium question</p>
+      {{ end }}
+    </div>

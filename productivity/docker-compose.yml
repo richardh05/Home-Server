@@ -50,6 +50,7 @@ services:
       - ALLOWED_HOSTS=*
       # Tell Tandoor to use SQLite instead of Postgres
       - DB_ENGINE=django.db.backends.sqlite3
+      - POSTGRES_DB=/opt/recipes/data/recipes.db
     networks:
       - proxy-public
     labels:
@@ -78,7 +79,7 @@ services:
       glance.icon: si:syncthing
       glance.url: http://${URL}:8384
       glance.description: File Sync
-      glance.category: Productivity
+      glance.category: System
       glance.id: syncthing
       docker-volume-backup.stop-during-backup: "true"
     # hostname: my-syncthing

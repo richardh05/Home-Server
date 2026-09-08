@@ -4,62 +4,26 @@
   columns:
     - size: small
       widgets:
-        - type: calendar
-          first-day-of-week: monday
+        - type: clock
+          hour-format: 24h
         - type: group
           widgets:
             - type: weather
-              title: Chester
-              location: Chester, United Kingdom
-              units: metric # alternatively "imperial"
-              hour-format: 24h # alternatively "24h"           
+              title: ${LOCATION_1}
+              location: ${OPEN_METEO_LOCATION_1}
+              units: metric
+              hour-format: 24h          
             - type: weather
-              title: Blackpool
-              location: Blackpool, United Kingdom
-              units: metric # alternatively "imperial"
-              hour-format: 24h # alternatively "24h"
+              title: ${LOCATION_2}
+              location: ${OPEN_METEO_LOCATION_2}
+              units: metric
+              hour-format: 24h
             - type: weather
-              title: London
-              location: London, United Kingdom
-              units: metric # alternatively "imperial"
-              hour-format: 24h # alternatively "24h"
-        - type: bookmarks
-          groups:
-          - links:
-            - title: Moodle
-              url: https://moodle.chester.ac.uk/my/
-              icon: si:moodle
-            - title: Timetable
-              url: https://timetabling.chester.ac.uk/personal
-              icon: si:googlecalendar
-            - title: Portal
-              url: https://portal1.chester.ac.uk/Pages/default.aspx
-              icon: si:dotnet
-
-    - size: full
-      widgets:
-        - type: docker-containers
-          running-only: true
-
-        - type: group
-          widgets:
-            - type: hacker-news
-            - type: lobsters
-            - type: reddit
-              subreddit: technology
-              show-thumbnails: true
-            - type: reddit
-              subreddit: selfhosted
-              show-thumbnails: true
-
-    - size: small
-      widgets:
-        - type: server-stats
-          servers:
-            - type: local
-              name: Services
-
-        #taken from yahoo finance
+              title: ${LOCATION_3}
+              location: ${OPEN_METEO_LOCATION_3}
+              units: metric
+              hour-format: 24h
+          #taken from yahoo finance
         - type: markets
           markets:
             - symbol: SPY
@@ -68,17 +32,57 @@
               name: Nasdaq 100
             - symbol: BTC-GBP
               name: Bitcoin
-            - symbol: ETH-GBP
-              name: Ethereum
 
+    - size: full
+      widgets:
+        - type: search
+          search-engine: https://search.brave.com/search?q={QUERY}
+          bangs:
+            - title: YouTube
+              shortcut: "!yt"
+              url: https://www.youtube.com/results?search_query={QUERY}
+        - type: docker-containers
+          title: Media
+          category: Media
+          sock-path: tcp://glance-socket-proxy:2375
+        - type: docker-containers
+          running-only: true
+          title: Productivity
+          category: Productivity
+          sock-path: tcp://glance-socket-proxy:2375
+        - type: docker-containers
+          running-only: true
+          title: System
+          category: System
+          sock-path: tcp://glance-socket-proxy:2375
 
-        - type: releases
-          cache: 1d
-          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
-          # read-only token from your Github account settings and use it here to increase the limit.
-          # token: ...
-          repositories:
-            - glanceapp/glance
-            - go-gitea/gitea
-            - immich-app/immich
-            - syncthing/syncthing
+    - size: small
+      widgets:
+        - type: server-stats
+          servers:
+            - type: local
+              name: Barry
+              mountpoints:
+                "/host":
+                  name: Internal
+                "/host/mnt/media":
+                  name: Media
+                "/host/mnt/backups":
+                  name: Backups
+                "/host/boot":
+                  hide: true
+        - type: dns-stats
+          service: adguard
+          url: http://host.docker.internal:8060
+          username: ${ADGUARD_USERNAME}
+          password: ${ADGUARD_PASSWORD}
+        - $include: leetcode.yml
+        - type: group
+          widgets:
+          - type: extension
+            title: Restic
+            url: http://restic-glance:8675/repo1
+            cache: 10s # set to any time of your choice.
+            allow-potentially-dangerous-html: true
+          - $include: immich.yml
+          - $include: abs.yml

@@ -1,17 +1,35 @@
 networks:
   proxy-public:
     external: true
+  glance-net:
+    driver: bridge
+    internal: true
 
 services:
   glance:
     container_name: glance
     image: glanceapp/glance
+    environment:
+      - ADGUARD_USERNAME=${ADGUARD_USERNAME}
+      - ADGUARD_PASSWORD=${ADGUARD_PASSWORD}
+      - IMMICH_URL=http://immich-server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - AUDIOBOOKSHELF_URL=http://audiobookshelf:80
+      - AUDIOBOOKSHELF_KEY=${ABS_API_KEY}
+      - DOCKER_HOST=tcp://socket-proxy:2375
+      - LOCATION_1=${LOCATION_1}
+      - LOCATION_2=${LOCATION_2}
+      - LOCATION_3=${LOCATION_3}
+      - OPEN_METEO_LOCATION_1=${OPEN_METEO_LOCATION_1}
+      - OPEN_METEO_LOCATION_2=${OPEN_METEO_LOCATION_2}
+      - OPEN_METEO_LOCATION_3=${OPEN_METEO_LOCATION_3}
     labels:
       glance.name: Glance
       glance.icon: si:glance
       glance.description: Homepage
       glance.category: System
       glance.url: https://glance.${DOMAIN}
+      glance.hide: true
 
       traefik.enable: true
       traefik.http.routers.glance.rule: Host(`glance.${DOMAIN}`)
@@ -22,7 +40,38 @@ services:
       - ./config:/app/config
       - ./assets:/app/assets
       - /etc/localtime:/etc/localtime:ro
-      # Optionally, also mount docker socket if you want to use the docker containers widget
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host:ro
     networks:
       - proxy-public
+      - glance-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  restic-glance:
+    image: ghcr.io/not-first/restic-glance-extension
+    environment:
+      - RESTIC_REPOS=repo1
+      - REPO1_RESTIC_PASSWORD=${RESTIC_PASSWORD}
+    volumes:
+      - ${RESTIC_REPO}:/app/repos/repo1
+      # Mask the locks directory with an in-memory writable tmpfs
+      - type: tmpfs
+        target: /app/repos/repo1/locks
+
+    restart: unless-stopped
+    networks:
+      - glance-net
+
+  socket-proxy:
+    container_name: glance-socket-proxy
+    image: tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - glance-net
+    labels:
+      glance.parent: Glance
+      glance.name: Socket Proxy    

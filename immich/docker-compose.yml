@@ -7,6 +7,10 @@
 #
 # The compose file on main may not be compatible with the latest release.
 
+networks:
+  proxy-public:
+    external: true
+
 name: immich
 
 services:
@@ -42,6 +46,9 @@ services:
       - /dev/dri/renderD128:/dev/dri/renderD128
     group_add:
       - ${RENDER_GID}
+    networks:
+      - default
+      - proxy-public
 
   immich-machine-learning:
     container_name: immich_machine_learning
