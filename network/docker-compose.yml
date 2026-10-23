@@ -72,8 +72,9 @@ services:
 
       # 3. Set Cloudflare as the DNS resolver & Let's Encrypt DNS Challenge
       - "--entrypoints.websecure.http.tls.certresolver=cloudflare-resolver"
-      - "--entrypoints.websecure.http.tls.domains[0].main=richard-hughes.dev"
-      - "--entrypoints.websecure.http.tls.domains[0].sans=*.richard-hughes.dev"
+      # change ${DOMAIN} to the actual domain if it breaks, but it should work with the variable as well
+      - "--entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}"
+      - "--entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}"
       - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge=true"
       - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.cloudflare-resolver.acme.dnschallenge.resolvers=1.1.1.1:53"

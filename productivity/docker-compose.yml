@@ -102,7 +102,7 @@ services:
     image: vikunja/vikunja
     environment:
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_SECRET}
-      VIKUNJA_SERVICE_PUBLICURL: https://vikunja.richard-hughes.dev/
+      VIKUNJA_SERVICE_PUBLICURL: https://vikunja.${DOMAIN}/
       VIKUNJA_DATABASE_TYPE: sqlite
     volumes:
       - ${DATA}/vikunja/files:/app/vikunja/files

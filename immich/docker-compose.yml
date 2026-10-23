@@ -19,10 +19,20 @@ services:
     labels:
       glance.name: Immich
       glance.icon: si:immich
-      glance.url: http://${URL}:2283
+      glance.url: https://immich.${DOMAIN}/
       glance.description: Photos
       glance.category: Media
       glance.id: immich
+
+      docker-volume-backup.stop-during-backup: "true"
+      
+      traefik.enable: "true"
+      traefik.docker.network: "proxy-public"
+      
+      traefik.http.routers.immich.rule: Host(`immich.${DOMAIN}`)
+      traefik.http.routers.immich.entrypoints: websecure
+      traefik.http.routers.immich.tls: true
+      traefik.http.services.immich.loadbalancer.server.port: "2283"
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     # extends:
     #   file: hwaccel.transcoding.yml
