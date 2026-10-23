@@ -1,0 +1,24 @@
+networks:
+  proxy-public:
+    external: true
+
+services:
+  linkding:
+    container_name: linkding
+    image: sissbruecker/linkding:latest-plus
+    restart: unless-stopped
+    volumes:
+      - "${DATA}/linkding:/etc/linkding/data"
+    networks:
+      - proxy-public 
+    labels:
+      glance.name: Linkding
+      glance.icon: auto-invert sh:linkding-dark
+      glance.description: Bookmarks
+      glance.category: Productivity
+      glance.url: https://linkding.${DOMAIN}
+
+      traefik.enable: true
+      traefik.http.routers.linkding.rule: Host(`linkding.${DOMAIN}`)
+      traefik.http.routers.linkding.entrypoints: websecure
+      traefik.http.services.linkding.loadbalancer.server.port: "9090"

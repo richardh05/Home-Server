@@ -5,6 +5,8 @@ include:
   - freshrss/docker-compose.yml
   - glance/docker-compose.yml
   - immich/docker-compose.yml
+  - job-ops/docker-compose.yml
+  - linkding/docker-compose.yml
   - media/docker-compose.yml
   - minecraft/docker-compose.yml
   - network/docker-compose.yml

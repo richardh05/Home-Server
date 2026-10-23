@@ -1,0 +1,32 @@
+networks:
+  proxy-public:
+    external: true
+# https://github.com/DaKheera47/job-ops
+services:
+  job-ops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: job-ops
+    volumes:
+      # Persist database and generated PDFs
+      - ${DATA}/job-ops:/app/data
+      # Persist Tectonic's LaTeX support-bundle cache. Without this, every
+      # container recreate re-downloads the support bundle on the first PDF
+      # render, which is slow and can fail with HTTP 429 rate-limiting.
+      - ${DATA}/job-ops-cache:/tectonic-cache:/root/.cache/Tectonic
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    networks:
+      - proxy-public 
+    labels:
+      glance.name: JobOps
+      glance.icon: auto-invert sh:linkedin-dark
+      glance.description: Job Board
+      glance.category: Productivity
+      glance.url: https://job-ops.${DOMAIN}
+
+      traefik.enable: true
+      traefik.http.routers.jobops.rule: Host(`job-ops.${DOMAIN}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
